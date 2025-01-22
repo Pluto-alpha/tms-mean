@@ -5,8 +5,8 @@ import User from "../models/UserModel";
 
 export const Register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
+    const { name, email, password,role } = req.body;
+    if (!name || !email || !password ) {
       res.status(400).json({ message: "All fields are required." });
     }
     const existingUser = await User.findOne({ email });
@@ -19,6 +19,7 @@ export const Register = async (req: Request, res: Response, next: NextFunction):
       name,
       email,
       password: hashedPassword,
+      role
     });
     res.status(201).json({
       success: true,

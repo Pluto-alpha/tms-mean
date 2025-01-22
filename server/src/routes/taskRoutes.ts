@@ -1,18 +1,21 @@
-import { Router } from "express";
+import express from "express";
+import { validateTokenHandler } from "../middlewares/authMiddleware";
 import {
   createTask,
-  getTask,
-  getAllTasks,
+  getTasks,
   updateTask,
   deleteTask,
+  getAllTasks,
 } from "../controllers/taskController";
 
-const taskRouter = Router();
+const router = express.Router();
 
-taskRouter.post("/create", createTask);
-taskRouter.get("/:id", getTask);
-taskRouter.get("/all-tasks", getAllTasks);
-taskRouter.put("/tasks/:id", updateTask);
-taskRouter.delete("/delete/:id", deleteTask);
+router.use(validateTokenHandler);
 
-export default taskRouter;
+router.post("/", createTask);
+router.get("/", getTasks);
+router.get("/all-tasks", getAllTasks);
+router.put("/:id", updateTask);
+router.delete("/:id", deleteTask);
+
+export default router;
