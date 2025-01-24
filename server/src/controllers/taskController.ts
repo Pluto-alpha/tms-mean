@@ -1,27 +1,39 @@
 import { Request, Response, NextFunction } from "express";
 import Task from "../models/TaskModel";
 import User from "../models/UserModel";
+import { parseDate } from "../utils/DateParsing";
 
 /**
  * @desc Create a new task
  * @route POST /api/v1/task/create
  * @access Private
  */
-export const createTask = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const createTask = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const { title, description, dueDate } = req.body;
+    const { title, description, dueDate, status } = req.body;
     const userId = req.user?.id;
-    if (!title || !description || !dueDate || !userId) {
-      res.status(400).json({ success: false, message: "Missing required fields" });
+    if (!title || !description || !dueDate || !status || !userId) {
+      res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
       return;
     }
     const task = await Task.create({
       title,
       description,
       dueDate,
+      status,
       userId,
     });
-    res.status(201).json({ success: true, message:'Task created successfully', data: task });
+    res.status(201).json({
+      success: true,
+      message: "Task created successfully",
+      data: task,
+    });
   } catch (error) {
     next(error);
   }
@@ -31,19 +43,24 @@ export const createTask = async (req: Request, res: Response, next: NextFunction
  * @route GET /api/v1/task/:id
  * @access Private
  */
-export const getTasks = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getTasks = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const userId = req.user?.id;
     if (!userId) {
       res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
-    const tasks = await Task.find({ userId });
+    const tasks = await Task.find({ userId }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, tasks });
   } catch (error) {
     next(error);
   }
 };
+
 /**
  * @desc Get all tasks (Admin only)
  * @route GET /api/v1/task/all-tasks
@@ -131,6 +148,40 @@ export const deleteTask = async (
     });
   } catch (error: any) {
     console.error(error);
+    next(error);
+  }
+};
+
+export const SearchAllTasks = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+    const { status, dueDate } = req.query;
+    let searchCriteria: any = { userId };
+    if (status) {
+      searchCriteria.status = status;
+    }
+    if (dueDate) {
+      const parsedDate = parseDate(dueDate as string);
+      if (parsedDate) {
+        searchCriteria.dueDate = { $gte: parsedDate };
+      } else {
+        res.status(400).json({
+          success: false,
+          message: "Invalid date format. Use DD-mm-yyyy.",
+        });
+      }
+    }
+    const tasks = await Task.find(searchCriteria).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, tasks });
+  } catch (error) {
     next(error);
   }
 };

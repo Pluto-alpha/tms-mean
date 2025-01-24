@@ -6,6 +6,7 @@ import {
   updateTask,
   deleteTask,
   getAllTasks,
+  SearchAllTasks,
 } from "../controllers/taskController";
 
 const router = express.Router();
@@ -14,6 +15,7 @@ router.use(validateTokenHandler);
 
 router.post("/", createTask);
 router.get("/", getTasks);
+router.get("/search", SearchAllTasks);
 router.get("/all-tasks", getAllTasks);
 router.put("/:id", updateTask);
 router.delete("/:id", deleteTask);

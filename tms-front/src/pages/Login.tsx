@@ -7,15 +7,23 @@ import { Box, TextField, Button, Card, CardContent, Typography } from '@mui/mate
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await dispatch<any>(loginUser({ email, password }));
-    if (result.meta.requestStatus === 'fulfilled') {
-      navigate('/dashboard');
-    } 
+    setError(null);
+    try {
+      const result = await dispatch<any>(loginUser({ email, password }));
+      if (result.meta.requestStatus === 'fulfilled') {
+        navigate('/dashboard');
+      } else {
+        setError('Invalid email or password');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    }
   };
 
   return (
@@ -33,6 +41,7 @@ const Login: React.FC = () => {
               margin="normal"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
             <TextField
               label="Password"
@@ -41,7 +50,13 @@ const Login: React.FC = () => {
               margin="normal"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
+            {error && (
+              <Typography color="error" variant="body2">
+                {error}
+              </Typography>
+            )}
             <Button type="submit" variant="contained" color="primary" fullWidth>
               Login
             </Button>

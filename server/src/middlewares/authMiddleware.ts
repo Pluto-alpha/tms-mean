@@ -22,8 +22,8 @@ export const validateTokenHandler = async (
   try {
     const token =
       req.headers.authorization?.split(" ")[1] ||
-      req.body.token ||
-      req.query.token ||
+      req.body.accessToken ||
+      req.query.accessToken ||
       req.headers["x-access-token"];
     if (!token) {
       res.status(401).json({ success: false, message: "Unauthorized: Token missing" });
