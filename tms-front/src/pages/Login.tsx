@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '../redux/hook';
 import { loginUser } from '../features/auth/authSlice';
 import { useNavigate, Link } from 'react-router-dom';
 import { Box, TextField, Button, Card, CardContent, Typography } from '@mui/material';
@@ -8,14 +8,14 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      const result = await dispatch<any>(loginUser({ email, password }));
+      const result = await dispatch(loginUser({ email, password }));
       if (result.meta.requestStatus === 'fulfilled') {
         navigate('/dashboard');
       } else {

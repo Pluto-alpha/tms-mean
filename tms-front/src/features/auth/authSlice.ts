@@ -1,23 +1,29 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../../config/base";
+import type { RootState } from "../../redux/store";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 interface AuthState {
-  userId: string | null; // User ID
-  accessToken: string | null; // Access token
-  isAuthenticated: boolean; // Authentication state
-  error: string | null; // Error message
+  user: User | null;
+  accessToken: string | null;
+  isAuthenticated: boolean;
+  error: string | null;
 }
 
 const initialState: AuthState = {
-  userId: null,
+  user: null,
   accessToken: localStorage.getItem("token") || null,
   isAuthenticated: !!localStorage.getItem("token"),
   error: null,
 };
 
-const API_URL = "http://localhost:8081/api/v1/auth/user";
-
-// Async thunk for registration
+// Async thunk for user registration
 export const registerUser = createAsyncThunk(
   "auth/register",
   async (
@@ -25,7 +31,7 @@ export const registerUser = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await axios.post(`${API_URL}/register`, userData);
+      const response = await API.post(`/api/v1/auth/user/register`, userData);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Registration failed");
@@ -33,7 +39,7 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-// Async thunk for login
+// Async thunk for user login
 export const loginUser = createAsyncThunk(
   "auth/login",
   async (
@@ -41,20 +47,37 @@ export const loginUser = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await axios.post(`${API_URL}/login`, credentials);
-      return response.data;
+      const response = await API.post(`/api/v1/auth/user/login`, credentials);
+      const { id, accessToken } = response.data;
+      localStorage.setItem("token", accessToken);
+      const userResponse = await API.get(`/api/v1/auth/user/${id}`);
+      const user = userResponse.data[0]; // Assuming it's an array
+      return { user, accessToken };
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Login failed");
     }
   }
 );
 
-// Async thunk for refreshing the token
+// Async thunk for user logout
+export const logout = createAsyncThunk(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      await API.post("/api/v1/auth/user/logout", {}, { withCredentials: true });
+      return true;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || "Logout failed");
+    }
+  }
+);
+
+// Async thunk for refreshing the user token
 export const refreshToken = createAsyncThunk(
   "auth/refreshToken",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/refresh-token`, null, {
+      const response = await API.post(`/api/v1/auth/user/refresh-token`, null, {
         withCredentials: true,
       });
       return response.data;
@@ -68,20 +91,25 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    logout(state) {
-      state.userId = null;
+    clearAuthState(state) {
+      state.user = null;
       state.accessToken = null;
       state.isAuthenticated = false;
-      localStorage.removeItem("token");
-      document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
+      .addCase(logout.fulfilled, (state) => {
+        state.user = null;
+        state.accessToken = null;
+        state.isAuthenticated = false;
+        state.error = null;
+      })
       .addCase(registerUser.fulfilled, (state, action: PayloadAction<any>) => {
-        const { id, accessToken } = action.payload;
-        if (id && accessToken) {
-          state.userId = id;
+        const { user, accessToken } = action.payload;
+        if (user && accessToken) {
+          state.user = user;
           state.accessToken = accessToken;
           state.isAuthenticated = true;
           localStorage.setItem("token", accessToken);
@@ -94,36 +122,33 @@ const authSlice = createSlice({
           action.payload?.message || "Registration failed. Please try again.";
       })
       .addCase(loginUser.fulfilled, (state, action: PayloadAction<any>) => {
-        const { id, accessToken } = action.payload;
-
-        if (id && accessToken) {
-          state.userId = id;
-          state.accessToken = accessToken;
-          state.isAuthenticated = true;
-          localStorage.setItem("token", accessToken);
-        } else {
-          state.error = "Invalid response format during login";
-        }
+        const { user, accessToken } = action.payload;
+        state.user = user;
+        state.accessToken = accessToken;
+        state.isAuthenticated = true;
+        state.error = null;
       })
       .addCase(loginUser.rejected, (state, action: PayloadAction<any>) => {
         state.error =
           action.payload?.message || "Login failed. Please try again.";
       })
       .addCase(refreshToken.fulfilled, (state, action: PayloadAction<any>) => {
-        const { accessToken } = action.payload;
-        if (accessToken) {
-          state.accessToken = accessToken;
-          localStorage.setItem("token", accessToken);
-        } else {
-          state.error = "Failed to refresh access token";
-        }
+        state.accessToken = action.payload.accessToken;
+        state.error = null;
       })
       .addCase(refreshToken.rejected, (state, action: PayloadAction<any>) => {
+        state.accessToken = null;
+        state.isAuthenticated = false;
         state.error =
-          action.payload?.message || "Failed to refresh token. Please login again.";
+          action.payload || "Failed to refresh token. Please login again.";
       });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { clearAuthState } = authSlice.actions;
 export default authSlice.reducer;
+
+// Selectors for user and username
+export const selectUser = (state: RootState) => state.auth.user;
+export const selectUsername = (state: RootState) =>
+  state.auth.user?.name || "Guest";

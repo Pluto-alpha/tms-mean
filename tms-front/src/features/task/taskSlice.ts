@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../../config/base";
 
 interface Task {
   _id: string;
@@ -27,7 +27,7 @@ const getToken = () => localStorage.getItem("token");
 export const fetchTasks = createAsyncThunk("tasks/fetchTasks", async () => {
   const token = getToken();
   if (!token) throw new Error("Authentication token not found");
-  const response = await axios.get("http://localhost:8081/api/v1/task", {
+  const response = await API.get("/api/v1/task", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -41,15 +41,11 @@ export const createTask = createAsyncThunk(
   async (task: Task, { rejectWithValue }) => {
     const token = localStorage.getItem("token");
     if (!token) return rejectWithValue("Authentication token not found");
-    const response = await axios.post(
-      "http://localhost:8081/api/v1/task",
-      task,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await API.post("/api/v1/task", task, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
   }
 );
@@ -57,24 +53,14 @@ export const createTask = createAsyncThunk(
 // Update an existing task
 export const updateTask = createAsyncThunk(
   "tasks/updateTask",
-  async ({
-    taskId,
-    task,
-  }: {
-    taskId: string;
-    task: Task;
-  }) => {
+  async ({ taskId, task }: { taskId: string; task: Task }) => {
     const token = getToken();
     if (!token) throw new Error("Authentication token not found");
-    const response = await axios.put(
-      `http://localhost:8081/api/v1/task/${taskId}`,
-      task,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await API.put(`/api/v1/task/${taskId}`, task, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
   }
 );
@@ -84,7 +70,7 @@ export const deleteTask = createAsyncThunk(
   async (taskId: string) => {
     const token = getToken();
     if (!token) throw new Error("Authentication token not found");
-    await axios.delete(`http://localhost:8081/api/v1/task/${taskId}`, {
+    await API.delete(`/api/v1/task/${taskId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -96,12 +82,15 @@ export const deleteTask = createAsyncThunk(
 // Search tasks based on parameters like status and dueDate
 export const searchTasks = createAsyncThunk(
   "tasks/searchTasks",
-  async (searchParams: { status?: string; dueDate?: string }, { rejectWithValue }) => {
+  async (
+    searchParams: { status?: string; dueDate?: string },
+    { rejectWithValue }
+  ) => {
     const token = getToken();
     if (!token) return rejectWithValue("Authentication token not found");
     try {
       const { status, dueDate } = searchParams;
-      const response = await axios.get("http://localhost:8081/api/v1/task/search", {
+      const response = await API.get("/api/v1/task/search", {
         params: { status, dueDate },
         headers: {
           Authorization: `Bearer ${token}`,

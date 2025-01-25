@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useAppDispatch } from "../redux/hook";
 import { registerUser } from "../features/auth/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -16,16 +16,14 @@ const Register: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      const result = await dispatch<any>(
-        registerUser({ name, email, password })
-      );
+      const result = await dispatch(registerUser({ name, email, password }));
       if (result.meta.requestStatus === "fulfilled") {
         navigate("/");
       } else {
@@ -89,10 +87,7 @@ const Register: React.FC = () => {
           <Box mt={2} textAlign="center">
             <Typography variant="body2">
               Already have an account?{" "}
-              <Link
-                to="/"
-                style={{ textDecoration: "none", color: "#1976d2" }}
-              >
+              <Link to="/" style={{ textDecoration: "none", color: "#1976d2" }}>
                 Login
               </Link>
             </Typography>

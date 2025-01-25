@@ -21,23 +21,22 @@ import {
 } from "@mui/material";
 import TaskCard from "../components/TaskCard";
 import moment from "moment";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../redux/hook";
 import {
   fetchTasks,
   createTask,
   updateTask,
   deleteTask,
 } from "../features/task/taskSlice";
-import { RootState, AppDispatch } from "../redux/store";
+import { RootState } from "../redux/store";
 import { searchTasks } from "../features/task/taskSlice";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 
 const TaskDashboard: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const tasks = useSelector((state: RootState) => state.tasks.tasks);
-  const loading = useSelector((state: RootState) => state.tasks.loading);
-
+  const dispatch = useAppDispatch();
+  const tasks = useAppSelector((state: RootState) => state.tasks.tasks);
+  const loading = useAppSelector((state: RootState) => state.tasks.loading);
   const [taskDetails, setTaskDetails] = useState({
     _id: "",
     title: "",
@@ -82,6 +81,11 @@ const TaskDashboard: React.FC = () => {
       status: "Pending",
     });
     setEditing(false);
+  };
+
+  const handleCancel = () => {
+    resetTaskDetails();
+    setOpenDialog(false);
   };
 
   const handleEditTask = (task: typeof taskDetails) => {
@@ -149,7 +153,7 @@ const TaskDashboard: React.FC = () => {
         <Button
           variant="contained"
           onClick={() => setOpenDialog(true)}
-          endIcon={<AddIcon />} // Adds the icon to the right of the text
+          endIcon={<AddIcon />}
         >
           Add Task
         </Button>
@@ -208,7 +212,7 @@ const TaskDashboard: React.FC = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button onClick={handleCancel}>Cancel</Button>
           <Button onClick={handleCreateTask}>
             {editing ? "Save Changes" : "Create Task"}
           </Button>
