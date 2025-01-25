@@ -1,6 +1,6 @@
-# Task Management System App with MEAN
+# Task Management System App with MERN
 
-A comprehensive task management system built with the MEAN (MongoDB, Express.js, Angular, Node.js) stack.
+A comprehensive task management system built with the MEAN (MongoDB, Express.js, ReactJS, Node.js) stack.
 
 ## Getting Started
 
