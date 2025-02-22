@@ -2,7 +2,12 @@
 
 
 export const parseDate = (dateString: string): Date | null => {
-  const [day, month, year] = dateString.split("-");
-  const formattedDate = `${year}-${month}-${day}T00:00:00Z`; // Format to yyyy-mm-dd
-  return new Date(formattedDate);
+  if (!dateString || !/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
+    return null;
+  }
+  const [day, month, year] = dateString.split("-").map(Number);
+  if (isNaN(day) || isNaN(month) || isNaN(year)) {
+    return null;
+  }
+  return new Date(Date.UTC(year, month - 1, day));
 };

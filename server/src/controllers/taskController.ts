@@ -163,20 +163,22 @@ export const SearchAllTasks = async (
       res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
-    const { status, dueDate } = req.query;
+    let { status, dueDate } = req.query;
+    console.log(`Status`,status);
+    console.log(`DueDate`,dueDate);
     let searchCriteria: any = { userId };
     if (status) {
-      searchCriteria.status = status;
+      const formattedStatus =
+        status.toString().charAt(0).toUpperCase() +
+        status.toString().slice(1).toLowerCase();
+      searchCriteria.status = formattedStatus;
     }
     if (dueDate) {
       const parsedDate = parseDate(dueDate as string);
       if (parsedDate) {
-        searchCriteria.dueDate = { $gte: parsedDate };
-      } else {
-        res.status(400).json({
-          success: false,
-          message: "Invalid date format. Use DD-mm-yyyy.",
-        });
+        const startOfDay = new Date(parsedDate.setUTCHours(0, 0, 0, 0));
+        const endOfDay = new Date(parsedDate.setUTCHours(23, 59, 59, 999));
+        searchCriteria.dueDate = { $gte: startOfDay, $lte: endOfDay };
       }
     }
     const tasks = await Task.find(searchCriteria).sort({ createdAt: -1 });

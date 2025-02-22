@@ -15,9 +15,6 @@ import {
   FormControl,
   InputLabel,
   SelectChangeEvent,
-  IconButton,
-  OutlinedInput,
-  InputAdornment,
 } from "@mui/material";
 import TaskCard from "../components/TaskCard";
 import moment from "moment";
@@ -44,7 +41,9 @@ const TaskDashboard: React.FC = () => {
     dueDate: "",
     status: "Pending",
   });
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusSearch, setStatusSearch] = useState<string>("");
+  const [dateSearch, setDateSearch] = useState<string>("");
+
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
 
@@ -112,12 +111,18 @@ const TaskDashboard: React.FC = () => {
 
   const handleSearch = () => {
     const searchParams = {
-      status: searchTerm,
-      dueDate: taskDetails.dueDate
-        ? moment(taskDetails.dueDate).format("DD-MM-YYYY")
-        : "",
+      status: statusSearch.trim()
+        ? capitalizeFirstLetter(statusSearch.trim())
+        : undefined,
+      dueDate: dateSearch.trim()
+        ? moment(dateSearch.trim()).format("DD-MM-YYYY")
+        : undefined,
     };
     dispatch(searchTasks(searchParams));
+  };
+
+  const capitalizeFirstLetter = (string: string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
   };
 
   return (
@@ -127,29 +132,35 @@ const TaskDashboard: React.FC = () => {
           <Typography variant="h6">Task Dashboard</Typography>
         </Toolbar>
       </AppBar>
-      <Box sx={{ p: 3, display: "flex", justifyContent: "space-between" }}>
-        <FormControl sx={{ width: 300 }} variant="outlined">
-          <InputLabel htmlFor="outlined-adornment-search">
-            Search Tasks
-          </InputLabel>
-          <OutlinedInput
-            id="outlined-adornment-search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            endAdornment={
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label="search tasks"
-                  onClick={handleSearch}
-                  edge="end"
-                >
-                  <SearchIcon />
-                </IconButton>
-              </InputAdornment>
-            }
-            label="Search Tasks"
-          />
+      <Box sx={{ p: 3, display: "flex", justifyContent:'space-around' }}>
+        <FormControl sx={{ width: 200 }} variant="outlined">
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={statusSearch}
+            onChange={(e) => setStatusSearch(e.target.value)}
+            label="Status"
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="In Progress">In Progress</MenuItem>
+            <MenuItem value="Completed">Completed</MenuItem>
+          </Select>
         </FormControl>
+        <TextField
+          label="Due Date"
+          type="date"
+          value={dateSearch}
+          onChange={(e) => setDateSearch(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+        />
+        <Button
+          variant="contained"
+          onClick={handleSearch}
+          endIcon={<SearchIcon />}
+        >
+          Search
+        </Button>
+
         <Button
           variant="contained"
           onClick={() => setOpenDialog(true)}
